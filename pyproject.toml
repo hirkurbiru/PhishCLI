@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phishcli"
+version = "0.1.0"
+description = "Terminal-Based Phishing Email Investigation Framework"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "PhishCLI Core Team", email = "security@phishcli.internal"}
+]
+keywords = ["cybersecurity", "phishing", "email-investigation", "cli", "soc", "dfir"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+dependencies = [
+    "click>=8.1.7",
+    "rich>=13.7.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.1.0",
+    "google-api-python-client>=2.118.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.0",
+    "python-dotenv>=1.0.1",
+    "dnspython>=2.6.0",
+    "checkdmarc>=5.7.0",
+    "python-whois>=0.8.0",
+    "requests>=2.31.0",
+    "reportlab>=4.1.0",
+    "sqlalchemy>=2.0.27",
+    "tldextract>=5.1.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.2.0",
+    "ruff>=0.2.2",
+    "mypy>=1.8.0",
+]
+
+[project.scripts]
+phishcli = "cli.main:cli"
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+[tool.setuptools.packages.find]
+include = [
+    "analysis*",
+    "cli*",
+    "config*",
+    "database*",
+    "gmail*",
+    "intelligence*",
+    "reports*",
+    "utils*"
+]

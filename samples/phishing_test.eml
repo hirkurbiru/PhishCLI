@@ -1,0 +1,48 @@
+Return-Path: <security@paypal.com>
+Received: from unknown-host (203.0.113.25)
+Authentication-Results: mx.example.com;
+    spf=fail smtp.mailfrom=paypal-secure.com;
+    dkim=fail;
+    dmarc=fail
+From: PayPal Security <security@paypal-secure.com>
+Reply-To: support@paypal-helpdesk.com
+To: victim@example.com
+Subject: Urgent: Verify Your PayPal Account Immediately
+Date: Tue, 29 Jul 2026 10:15:00 +0000
+Message-ID: <123456789@example.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+
+<html>
+<body>
+
+<h2>Important Security Notice</h2>
+
+<p>Dear Customer,</p>
+
+<p>
+We detected unusual activity on your PayPal account.
+To avoid account suspension, please verify your account immediately.
+</p>
+
+<p>
+Click the secure verification link below:
+</p>
+
+<p>
+<a href="https://paypal-secure.com/login/verify?session=92831">
+Verify My Account
+</a>
+</p>
+
+<p>
+Failure to verify within 24 hours may permanently restrict your account.
+</p>
+
+<p>
+Thank you,<br>
+PayPal Security Team
+</p>
+
+</body>
+</html>
