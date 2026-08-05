@@ -2,5 +2,11 @@
     "active_account": "biruhirkur07@gmail.com",
     "accounts": [
         "biruhirkur07@gmail.com"
+    ],
+    "version": "1.1",
+    "active_profile": "soc_lab",
+    "profiles": [
+        "testing",
+        "soc_lab"
     ]
 }

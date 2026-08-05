@@ -45,3 +45,4 @@ class AccountManager:
             return
 
         print(f"\nEmail : {SessionManager.get_email()}")
+        
