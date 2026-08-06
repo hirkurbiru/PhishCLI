@@ -1,0 +1,16 @@
+{
+    "profile_name": "o",
+    "email": "",
+    "created_at": "2026-08-05T17:09:27.123243",
+    "last_login": null,
+    "workspace": {
+        "database": "database",
+        "reports": "reports",
+        "investigations": "investigations",
+        "exports": "exports",
+        "logs": "logs",
+        "attachments": "attachments",
+        "cache": "cache",
+        "token": "token.json"
+    }
+}

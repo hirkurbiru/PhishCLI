@@ -1,38 +1,44 @@
 """
 PhishCLI - Session Manager
 
-Manages the current Gmail session.
+Manages the active PhishCLI profile session.
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
+
+from accounts.storage import AccountStorage
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRETS_DIR = BASE_DIR / "secrets"
+SECRETS_DIR.mkdir(parents=True, exist_ok=True)
 
 SESSION_FILE = SECRETS_DIR / "session.json"
 
 
 class SessionManager:
     """
-    Handles the active Gmail session.
+    Handles the active profile session.
     """
 
     @staticmethod
-    def save(email):
+    def save(profile_name: str, email: str):
         """
-        Save the connected Gmail account.
+        Save the active profile session.
         """
 
-        SECRETS_DIR.mkdir(parents=True, exist_ok=True)
-
-        with open(SESSION_FILE, "w", encoding="utf-8") as file:
+        with open(
+            SESSION_FILE,
+            "w",
+            encoding="utf-8",
+        ) as file:
 
             json.dump(
                 {
                     "connected": True,
+                    "profile": profile_name,
                     "email": email,
                 },
                 file,
@@ -42,7 +48,7 @@ class SessionManager:
     @staticmethod
     def load():
         """
-        Load the current Gmail session.
+        Load the active session.
         """
 
         if not SESSION_FILE.exists():
@@ -60,7 +66,7 @@ class SessionManager:
     @staticmethod
     def clear():
         """
-        Remove the current Gmail session.
+        Remove the active session.
         """
 
         if SESSION_FILE.exists():
@@ -70,12 +76,12 @@ class SessionManager:
     @staticmethod
     def is_connected():
         """
-        Returns True if a Gmail account is connected.
+        Returns True if a profile is connected.
         """
 
         session = SessionManager.load()
 
-        if not session:
+        if session is None:
 
             return False
 
@@ -87,13 +93,71 @@ class SessionManager:
     @staticmethod
     def get_email():
         """
-        Returns the connected Gmail address.
+        Returns the active email address.
         """
 
         session = SessionManager.load()
 
-        if not session:
+        if session is None:
 
             return None
 
         return session.get("email")
+
+    @staticmethod
+    def get_profile():
+        """
+        Returns the active profile name.
+        """
+
+        session = SessionManager.load()
+
+        if session is None:
+
+            return None
+
+        return session.get("profile")
+
+    @staticmethod
+    def switch_profile(profile_name: str):
+        """
+        Switch to another existing profile.
+        """
+
+        data = AccountStorage.load_accounts()
+
+        if profile_name not in data["profiles"]:
+
+            raise ValueError(
+                "Profile not found."
+            )
+
+        AccountStorage.switch_profile(
+            profile_name
+        )
+
+        session = SessionManager.load()
+
+        if session:
+
+            session["profile"] = profile_name
+
+            with open(
+                SESSION_FILE,
+                "w",
+                encoding="utf-8",
+            ) as file:
+
+                json.dump(
+                    session,
+                    file,
+                    indent=4,
+                )
+
+    @staticmethod
+    def get_session():
+        """
+        Returns the complete session data.
+        """
+
+        return SessionManager.load()

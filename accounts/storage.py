@@ -9,8 +9,8 @@ Backward compatible with v1.0.
 
 import json
 import shutil
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 DATA_DIR = Path("accounts_data")
@@ -23,20 +23,11 @@ PROFILES_DIR.mkdir(exist_ok=True)
 
 
 class AccountStorage:
-    """
-    Handles account and profile storage.
-    """
-
-    # ==========================================================
-    # Internal Helpers
-    # ==========================================================
+    """Handles account and profile storage."""
 
     @staticmethod
     def _default_data():
-        """
-        Returns the default storage structure.
-        """
-
+        """Returns the default storage structure."""
         return {
             "version": "1.1",
             "active_account": None,
@@ -45,303 +36,185 @@ class AccountStorage:
             "profiles": [],
         }
 
-    # ==========================================================
-    # Account Storage (v1.0 Compatible)
-    # ==========================================================
-
     @staticmethod
     def load_accounts():
-        """
-        Loads account storage.
-        """
-
+        """Loads account storage."""
         if not ACCOUNTS_FILE.exists():
-
             return AccountStorage._default_data()
 
-        with open(
-            ACCOUNTS_FILE,
-            "r",
-            encoding="utf-8",
-        ) as file:
-
+        with open(ACCOUNTS_FILE, "r", encoding="utf-8") as file:
             data = json.load(file)
 
-        # Upgrade older versions automatically
-
         if "version" not in data:
-
             data["version"] = "1.1"
 
         if "active_profile" not in data:
-
             data["active_profile"] = None
 
         if "profiles" not in data:
-
             data["profiles"] = []
 
         return data
 
     @staticmethod
     def save_accounts(data):
-        """
-        Saves account storage.
-        """
-
-        with open(
-            ACCOUNTS_FILE,
-            "w",
-            encoding="utf-8",
-        ) as file:
-
-            json.dump(
-                data,
-                file,
-                indent=4,
-            )
+        """Saves account storage."""
+        with open(ACCOUNTS_FILE, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4)
 
     @staticmethod
     def get_accounts():
-        """
-        Returns all Gmail accounts.
-        """
-
+        """Returns all Gmail accounts."""
         return AccountStorage.load_accounts()["accounts"]
 
     @staticmethod
     def get_active_account():
-        """
-        Returns the active Gmail account.
-        """
-
+        """Returns the active Gmail account."""
         return AccountStorage.load_accounts()["active_account"]
 
     @staticmethod
     def add_account(email):
-        """
-        Adds a Gmail account.
-        """
-
+        """Adds a Gmail account."""
         data = AccountStorage.load_accounts()
 
         if email not in data["accounts"]:
-
             data["accounts"].append(email)
 
         data["active_account"] = email
-
         AccountStorage.save_accounts(data)
 
     @staticmethod
     def switch_account(email):
-        """
-        Switches active Gmail account.
-        """
-
+        """Switches active Gmail account."""
         data = AccountStorage.load_accounts()
 
         if email in data["accounts"]:
-
             data["active_account"] = email
-
             AccountStorage.save_accounts(data)
 
     @staticmethod
     def remove_account(email):
-        """
-        Removes a Gmail account.
-        """
-
+        """Removes a Gmail account."""
         data = AccountStorage.load_accounts()
 
         if email in data["accounts"]:
-
             data["accounts"].remove(email)
 
             if data["active_account"] == email:
-
                 if data["accounts"]:
-
                     data["active_account"] = data["accounts"][0]
-
                 else:
-
                     data["active_account"] = None
 
             AccountStorage.save_accounts(data)
 
-    # ==========================================================
-    # Profile Management (v1.1)
-    # ==========================================================
-
     @staticmethod
     def get_profile_directory(profile_name: str) -> Path:
-        """
-        Returns the directory of a profile.
-        """
-
-        safe_name = (
-            profile_name
-            .strip()
-            .lower()
-            .replace(" ", "_")
-        )
-
+        """Returns the directory of a profile."""
+        safe_name = profile_name.strip().lower().replace(" ", "_")
         return PROFILES_DIR / safe_name
 
     @staticmethod
     def profile_exists(profile_name: str) -> bool:
-        """
-        Checks whether a profile exists.
-        """
-
-        return AccountStorage.get_profile_directory(
-            profile_name
-        ).exists()
+        """Checks whether a profile exists."""
+        return AccountStorage.get_profile_directory(profile_name).exists()
 
     @staticmethod
-    def create_profile(
-        profile_name: str,
-        email: str = "",
-    ):
-        """
-        Creates a new profile.
-        """
-
-        profile_dir = (
-            AccountStorage.get_profile_directory(
-                profile_name
-            )
-        )
+    def create_profile(profile_name: str, email: str = ""):
+        """Creates a new profile workspace."""
+        profile_dir = AccountStorage.get_profile_directory(profile_name)
 
         if profile_dir.exists():
+            raise ValueError("Profile already exists.")
 
-            raise ValueError(
-                "Profile already exists."
-            )
+        profile_dir.mkdir(parents=True, exist_ok=True)
 
-        profile_dir.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        folders = [
+            "reports",
+            "database",
+            "investigations",
+            "exports",
+            "logs",
+            "attachments",
+            "cache",
+        ]
 
-        (profile_dir / "reports").mkdir(
-            exist_ok=True,
-        )
+        for folder in folders:
+            (profile_dir / folder).mkdir(exist_ok=True)
 
         metadata = {
             "profile_name": profile_name,
             "email": email,
             "created_at": datetime.now().isoformat(),
             "last_login": None,
-            "database": "phishcli.db",
-            "token": "token.json",
-            "reports": "reports",
+            "workspace": {
+                "database": "database",
+                "reports": "reports",
+                "investigations": "investigations",
+                "exports": "exports",
+                "logs": "logs",
+                "attachments": "attachments",
+                "cache": "cache",
+                "token": "token.json",
+            },
         }
 
-        with open(
-            profile_dir / "metadata.json",
-            "w",
-            encoding="utf-8",
-        ) as file:
-
-            json.dump(
-                metadata,
-                file,
-                indent=4,
-            )
+        with open(profile_dir / "metadata.json", "w", encoding="utf-8") as file:
+            json.dump(metadata, file, indent=4)
 
         data = AccountStorage.load_accounts()
-
         safe_name = profile_dir.name
 
         if safe_name not in data["profiles"]:
-
-            data["profiles"].append(
-                safe_name
-            )
+            data["profiles"].append(safe_name)
 
         data["active_profile"] = safe_name
-
         AccountStorage.save_accounts(data)
 
     @staticmethod
     def list_profiles():
-        """
-        Returns all profile names.
-        """
-
+        """Returns all profile names."""
         if not PROFILES_DIR.exists():
-
             return []
 
-        return sorted(
-            [
-                folder.name
-                for folder in PROFILES_DIR.iterdir()
-                if folder.is_dir()
-            ]
-        )
+        return sorted(folder.name for folder in PROFILES_DIR.iterdir() if folder.is_dir())
 
     @staticmethod
     def get_active_profile():
-        """
-        Returns the active profile.
-        """
-
-        return AccountStorage.load_accounts()[
-            "active_profile"
-        ]
+        """Returns the active profile."""
+        return AccountStorage.load_accounts()["active_profile"]
 
     @staticmethod
-    def switch_profile(
-        profile_name: str,
-    ):
-        """
-        Switches the active profile.
-        """
-
+    def switch_profile(profile_name: str):
+        """Switches the active profile."""
         data = AccountStorage.load_accounts()
 
-        if (
-            profile_name
-            not in data["profiles"]
-        ):
-
-            raise ValueError(
-                "Profile not found."
-            )
+        if profile_name not in data["profiles"]:
+            raise ValueError("Profile not found.")
 
         data["active_profile"] = profile_name
-
         AccountStorage.save_accounts(data)
 
     @staticmethod
-    def delete_profile(
-        profile_name: str,
-    ):
-        """
-        Deletes a profile.
-        """
-
-        profile_dir = (
-            AccountStorage.get_profile_directory(
-                profile_name
-            )
-        )
+    def delete_profile(profile_name: str):
+        """Deletes a profile."""
+        profile_dir = AccountStorage.get_profile_directory(profile_name)
 
         if profile_dir.exists():
-
             shutil.rmtree(profile_dir)
 
         data = AccountStorage.load_accounts()
 
         if profile_name in data["profiles"]:
+            data["profiles"].remove(profile_name)
 
-            data["profiles"].remove(
-                profile_name
-            )
+            if data["active_profile"] == profile_name:
+                if data["profiles"]:
+                    data["active_profile"] = data["profiles"][0]
+                else:
+                    data["active_profile"] = None
+
+            AccountStorage.save_accounts(data)
 
         if (
             data["active_profile"]

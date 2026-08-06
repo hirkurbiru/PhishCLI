@@ -11,6 +11,7 @@ from dashboard.dashboard import show_dashboard
 from reports.report_manager import reports_menu
 from settings.settings import show_settings
 
+from gmail.gmail_menu import show_gmail_menu
 from gmail.gmail_connection import GmailConnection
 
 from investigation.manager import InvestigationManager
@@ -30,12 +31,12 @@ def main():
         choice = show_main_menu()
 
         # --------------------------------------------------
-        # Connect Gmail
+        # Gmail Manager
         # --------------------------------------------------
 
         if choice == "1":
 
-            GmailConnection.connect()
+            show_gmail_menu()
 
         # --------------------------------------------------
         # Gmail Investigation

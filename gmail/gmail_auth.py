@@ -9,6 +9,10 @@ from pathlib import Path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+
+from utils.profile_paths import ProfilePaths
+from config.constants import CREDENTIALS_FILE_PATH
 
 
 SCOPES = [
@@ -21,47 +25,69 @@ class GmailAuthenticator:
     Handles Gmail OAuth authentication.
     """
 
-    BASE_DIR = Path(__file__).resolve().parent.parent
+    @classmethod
+    def get_token_file(cls) -> Path:
+        """
+        Returns the OAuth token file for the active profile.
+        """
 
-    SECRETS_DIR = BASE_DIR / "secrets"
+        token_file = ProfilePaths.get_token_file()
 
-    CREDENTIALS_FILE = SECRETS_DIR / "credentials.json"
+        token_file.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
-    TOKEN_FILE = SECRETS_DIR / "token.json"
+        return token_file
 
     @classmethod
-    def authenticate(cls):
+    def authenticate(
+        cls,
+        force_login: bool = False,
+    ):
         """
-        Authenticates the user with Gmail OAuth.
+        Authenticate with Gmail.
 
-        Returns:
-            Credentials: Authorized Gmail credentials.
+        Args:
+            force_login:
+                If True, ignore the saved token and
+                force a new Google authentication.
         """
+
+        token_file = cls.get_token_file()
 
         creds = None
 
-        # --------------------------------------------------
-        # Load existing OAuth token
-        # --------------------------------------------------
+        # ------------------------------------------
+        # Force New Login
+        # ------------------------------------------
 
-        if cls.TOKEN_FILE.exists():
+        if force_login and token_file.exists():
+
+            token_file.unlink()
+
+        # ------------------------------------------
+        # Load Existing Token
+        # ------------------------------------------
+
+        if token_file.exists():
 
             creds = Credentials.from_authorized_user_file(
-                str(cls.TOKEN_FILE),
+                str(token_file),
                 SCOPES,
             )
 
-        # --------------------------------------------------
-        # Valid token
-        # --------------------------------------------------
+        # ------------------------------------------
+        # Valid Token
+        # ------------------------------------------
 
         if creds and creds.valid:
 
             return creds
 
-        # --------------------------------------------------
-        # Refresh expired token
-        # --------------------------------------------------
+        # ------------------------------------------
+        # Refresh Expired Token
+        # ------------------------------------------
 
         if creds and creds.expired and creds.refresh_token:
 
@@ -69,51 +95,106 @@ class GmailAuthenticator:
 
         else:
 
-            if not cls.CREDENTIALS_FILE.exists():
+            # ------------------------------------------
+            # Check Google OAuth Credentials
+            # ------------------------------------------
+
+            if not CREDENTIALS_FILE_PATH.exists():
 
                 raise FileNotFoundError(
-                    f"credentials.json not found:\n{cls.CREDENTIALS_FILE}"
+                    "\n"
+                    "Google OAuth credentials were not found.\n\n"
+                    f"Expected location:\n{CREDENTIALS_FILE_PATH}\n\n"
+                    "Copy your credentials.json file to this location "
+                    "and try again."
                 )
 
             flow = InstalledAppFlow.from_client_secrets_file(
-                str(cls.CREDENTIALS_FILE),
+                str(CREDENTIALS_FILE_PATH),
                 SCOPES,
             )
 
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_local_server(
+                port=0,
+                open_browser=True,
+            )
 
-        # --------------------------------------------------
-        # Save token
-        # --------------------------------------------------
+        # ------------------------------------------
+        # Save Token
+        # ------------------------------------------
 
-        cls.TOKEN_FILE.parent.mkdir(
-            parents=True,
-            exist_ok=True,
-        )
+        with open(
+            token_file,
+            "w",
+            encoding="utf-8",
+        ) as token:
 
-        with open(cls.TOKEN_FILE, "w") as token:
-
-            token.write(creds.to_json())
+            token.write(
+                creds.to_json()
+            )
 
         return creds
 
     @classmethod
-    def is_authenticated(cls):
+    def get_authenticated_email(
+        cls,
+        force_login: bool = False,
+    ):
         """
-        Returns True if a Gmail OAuth token exists.
+        Returns the authenticated Gmail address.
         """
 
-        return cls.TOKEN_FILE.exists()
+        service = cls.get_service(
+            force_login=force_login,
+        )
+
+        profile = (
+            service.users()
+            .getProfile(userId="me")
+            .execute()
+        )
+
+        return profile["emailAddress"]
+
+    @classmethod
+    def get_service(
+        cls,
+        force_login: bool = False,
+    ):
+        """
+        Returns an authenticated Gmail API service.
+        """
+
+        creds = cls.authenticate(
+            force_login=force_login,
+        )
+
+        return build(
+            "gmail",
+            "v1",
+            credentials=creds,
+        )
+
+    @classmethod
+    def is_authenticated(cls):
+        """
+        Returns True if the active profile
+        has an OAuth token.
+        """
+
+        return cls.get_token_file().exists()
 
     @classmethod
     def logout(cls):
         """
-        Removes the saved Gmail OAuth token.
+        Deletes the active profile token.
         """
 
-        if cls.TOKEN_FILE.exists():
+        token_file = cls.get_token_file()
 
-            cls.TOKEN_FILE.unlink()
+        if token_file.exists():
+
+            token_file.unlink()
 
             return True
 

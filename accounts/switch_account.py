@@ -1,39 +1,25 @@
 """
-PhishCLI - Switch Gmail Account
+PhishCLI - Switch Profile
 
-Handles switching between Gmail accounts.
+Handles switching between PhishCLI profiles.
 """
 
 from cli.display import pause
 
-from gmail.gmail_connection import GmailConnection
+from accounts.account_manager import AccountManager
 
 
 def switch_account():
     """
-    Switch to a different Gmail account.
+    Switch the active PhishCLI profile.
     """
 
     print("\n" + "=" * 60)
-    print("SWITCH GMAIL ACCOUNT")
+    print("SWITCH PROFILE")
     print("=" * 60)
 
-    if GmailConnection.is_connected():
+    AccountManager.switch_account()
 
-        print("\nCurrent Gmail account will be disconnected.")
-
-        confirm = input(
-            "\nContinue? (y/n): "
-        ).strip().lower()
-
-        if confirm != "y":
-
-            return
-
-        GmailConnection.disconnect()
-
-    print("\nConnecting a new Gmail account...\n")
-
-    GmailConnection.connect()
+    print("\nProfile switched successfully.")
 
     pause()

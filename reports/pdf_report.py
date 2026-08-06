@@ -4,7 +4,6 @@ PhishCLI - PDF Report Generator
 Exports investigation history into a professional PDF report.
 """
 
-from pathlib import Path
 from datetime import datetime
 
 from reportlab.lib.styles import getSampleStyleSheet
@@ -20,14 +19,26 @@ from reportlab.lib import colors
 from database.connection import SessionLocal
 from database.repository import ScanRepository
 
-REPORT_DIR = Path("reports_output")
-REPORT_DIR.mkdir(exist_ok=True)
+from utils.profile_paths import ProfilePaths
+from accounts.session import SessionManager
 
 
 def export_pdf_report():
     """
     Export investigation history into a professional PDF report.
     """
+
+    report_dir = ProfilePaths.get_reports_dir()
+
+    report_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    report_file = (
+        report_dir
+        / "investigation_report.pdf"
+    )
 
     db = SessionLocal()
 
@@ -38,8 +49,6 @@ def export_pdf_report():
         history = repository.get_scan_history()
 
         summary = repository.get_mailbox_summary()
-
-        report_file = REPORT_DIR / "investigation_report.pdf"
 
         document = SimpleDocTemplate(str(report_file))
 
@@ -61,6 +70,20 @@ def export_pdf_report():
         elements.append(
             Paragraph(
                 f"Generated: {datetime.now().strftime('%d-%m-%Y %H:%M:%S')}",
+                styles["Normal"],
+            )
+        )
+
+        elements.append(
+            Paragraph(
+                f"Profile: {SessionManager.get_profile()}",
+                styles["Normal"],
+            )
+        )
+
+        elements.append(
+            Paragraph(
+                f"Gmail: {SessionManager.get_email()}",
                 styles["Normal"],
             )
         )
@@ -117,7 +140,10 @@ def export_pdf_report():
             )
         )
 
-        for index, (email, analysis) in enumerate(history, start=1):
+        for index, (email, analysis) in enumerate(
+            history,
+            start=1,
+        ):
 
             elements.append(
                 Paragraph(
@@ -175,7 +201,9 @@ def export_pdf_report():
                 )
             )
 
-            elements.append(Spacer(1, 12))
+            elements.append(
+                Spacer(1, 12)
+            )
 
         # ======================================================
         # Recommendations
@@ -206,7 +234,9 @@ def export_pdf_report():
                 )
             )
 
-        elements.append(Spacer(1, 20))
+        elements.append(
+            Spacer(1, 20)
+        )
 
         # ======================================================
         # Footer
@@ -221,7 +251,7 @@ def export_pdf_report():
 
         elements.append(
             Paragraph(
-                "Professional Email Investigation Framework",
+                "Professional Multi-Profile Email Investigation Framework",
                 styles["Normal"],
             )
         )
@@ -231,8 +261,9 @@ def export_pdf_report():
         print("\n" + "=" * 60)
         print("PDF REPORT EXPORTED")
         print("=" * 60)
+
         print(f"\nLocation : {report_file}")
-        
+
         return report_file
 
     finally:

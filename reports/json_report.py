@@ -5,20 +5,31 @@ Exports investigation history into a structured JSON report.
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
 
 from database.connection import SessionLocal
 from database.repository import ScanRepository
 
-REPORT_DIR = Path("reports_output")
-REPORT_DIR.mkdir(exist_ok=True)
+from utils.profile_paths import ProfilePaths
+from accounts.session import SessionManager
 
 
 def export_json_report():
     """
     Export investigation history as a JSON report.
     """
+
+    report_dir = ProfilePaths.get_reports_dir()
+
+    report_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    report_file = (
+        report_dir
+        / "investigation_report.json"
+    )
 
     db = SessionLocal()
 
@@ -34,7 +45,11 @@ def export_json_report():
 
             "tool": "PhishCLI",
 
-            "version": "1.0",
+            "version": "1.1",
+
+            "profile": SessionManager.get_profile(),
+
+            "gmail_account": SessionManager.get_email(),
 
             "generated_at": datetime.now().isoformat(),
 
@@ -89,8 +104,6 @@ def export_json_report():
 
             )
 
-        report_file = REPORT_DIR / "investigation_report.json"
-
         with open(
             report_file,
             "w",
@@ -111,23 +124,23 @@ def export_json_report():
         print(f"\nLocation : {report_file}")
 
         print(
-            f"Emails   : {summary['total_emails']}"
+            f"Emails      : {summary['total_emails']}"
         )
 
         print(
-            f"Safe     : {summary['safe']}"
+            f"Safe        : {summary['safe']}"
         )
 
         print(
-            f"Suspicious : {summary['suspicious']}"
+            f"Suspicious  : {summary['suspicious']}"
         )
 
         print(
-            f"High Risk : {summary['high_risk']}"
+            f"High Risk   : {summary['high_risk']}"
         )
 
         print(
-            f"Phishing : {summary['phishing']}"
+            f"Phishing    : {summary['phishing']}"
         )
 
     finally:

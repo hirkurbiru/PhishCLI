@@ -1,23 +1,31 @@
 """
 PhishCLI - Gmail Connection Manager
 
-Handles connecting to and disconnecting from Gmail.
+Handles Gmail API connection.
 """
 
 from googleapiclient.discovery import build
 
 from gmail.gmail_auth import GmailAuthenticator
+from accounts.session import SessionManager
 
 
 class GmailConnection:
     """
-    Handles Gmail connection management.
+    Handles Gmail API connection.
     """
 
     @staticmethod
-    def connect():
+    def connect(force_login: bool = False):
         """
-        Connects to Gmail using OAuth.
+        Connect to Gmail using OAuth.
+
+        Args:
+            force_login (bool):
+                If True, forces a new Gmail authentication.
+
+        Returns:
+            str: Authenticated Gmail address.
         """
 
         print("\n" + "=" * 60)
@@ -26,49 +34,69 @@ class GmailConnection:
 
         print("\nOpening Google authentication...\n")
 
-        creds = GmailAuthenticator.authenticate()
-
-        service = build(
-            "gmail",
-            "v1",
-            credentials=creds,
+        # Authenticate Gmail
+        email = GmailAuthenticator.get_authenticated_email(
+            force_login=force_login,
         )
 
-        profile = (
-            service.users()
-            .getProfile(userId="me")
-            .execute()
-        )
+        profile = SessionManager.get_profile()
 
-        email = profile.get("emailAddress", "Unknown")
+        if profile:
+
+            SessionManager.save(
+                profile,
+                email,
+            )
 
         print("\n✓ Gmail connected successfully.")
-        print(f"Connected Account : {email}")
+        print(f"Profile       : {profile}")
+        print(f"Gmail Account : {email}")
 
         return email
 
     @staticmethod
     def disconnect():
         """
-        Disconnects Gmail by removing the saved OAuth token.
+        Disconnect Gmail from the active profile.
         """
 
         print("\n" + "=" * 60)
         print("DISCONNECT GMAIL")
         print("=" * 60)
 
-        if GmailAuthenticator.logout():
+        GmailAuthenticator.logout()
 
-            print("\n✓ Gmail disconnected successfully.")
+        SessionManager.clear()
 
-        else:
-
-            print("\nNo Gmail account is currently connected.")
+        print("\n✓ Gmail disconnected successfully.")
 
     @staticmethod
     def is_connected():
         """
-        Returns True if Gmail is already connected.
+        Returns True if the active profile is connected.
         """
 
-        return GmailAuthenticator.is_authenticated()
+        return (
+            GmailAuthenticator.is_authenticated()
+            and SessionManager.is_connected()
+        )
+
+    @staticmethod
+    def get_service(force_login: bool = False):
+        """
+        Returns an authenticated Gmail API service.
+
+        Args:
+            force_login (bool):
+                If True, forces a new Gmail authentication.
+        """
+
+        creds = GmailAuthenticator.authenticate(
+            force_login=force_login,
+        )
+
+        return build(
+            "gmail",
+            "v1",
+            credentials=creds,
+        )

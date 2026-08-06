@@ -4,9 +4,11 @@
         "biruhirkur07@gmail.com"
     ],
     "version": "1.1",
-    "active_profile": "soc_lab",
+    "active_profile": "phish",
     "profiles": [
         "testing",
-        "soc_lab"
+        "soc_lab",
+        "o",
+        "phish"
     ]
 }

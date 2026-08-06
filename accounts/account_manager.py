@@ -1,58 +1,66 @@
 """
 PhishCLI - Account Manager
 
-Manages saved Gmail accounts.
+Manages PhishCLI profiles.
 """
 
 from accounts.storage import AccountStorage
+from accounts.session import SessionManager
+
+from gmail.gmail_auth import GmailAuthenticator
 
 
 class AccountManager:
     """
-    High-level account management.
+    High-level profile management.
     """
 
     @staticmethod
     def show_accounts():
         """
-        Displays all saved accounts.
+        Displays all available profiles.
         """
 
-        accounts = AccountStorage.get_accounts()
+        profiles = AccountStorage.list_profiles()
 
-        active = AccountStorage.get_active_account()
+        active = AccountStorage.get_active_profile()
 
-        if not accounts:
+        if not profiles:
 
-            print("\nNo Gmail accounts saved.")
+            print("\nNo profiles found.")
 
             return
 
         print("\n" + "=" * 60)
-        print("SAVED GMAIL ACCOUNTS")
+        print("PHISHCLI PROFILES")
         print("=" * 60)
 
-        for index, account in enumerate(accounts, start=1):
+        for index, profile in enumerate(
+            profiles,
+            start=1,
+        ):
 
             marker = ""
 
-            if account == active:
+            if profile == active:
 
                 marker = " (Active)"
 
-            print(f"{index}. {account}{marker}")
+            print(
+                f"{index}. {profile}{marker}"
+            )
 
     @staticmethod
     def switch_account():
         """
-        Switch the active Gmail account.
+        Switch the active profile.
         """
 
-        accounts = AccountStorage.get_accounts()
+        profiles = AccountStorage.list_profiles()
 
-        if not accounts:
+        if not profiles:
 
-            print("\nNo saved accounts.")
+            print("\nNo profiles found.")
 
             return
 
@@ -62,35 +70,59 @@ class AccountManager:
 
             try:
 
-                choice = int(input("\nSelect account: "))
+                choice = int(
+                    input(
+                        "\nSelect profile: "
+                    )
+                )
 
-                if 1 <= choice <= len(accounts):
+                if 1 <= choice <= len(profiles):
 
                     break
 
-                print("Invalid selection.")
+                print("\nInvalid selection.")
 
             except ValueError:
 
-                print("Please enter a valid number.")
+                print(
+                    "\nPlease enter a valid number."
+                )
 
-        selected = accounts[choice - 1]
+        selected = profiles[
+            choice - 1
+        ]
 
-        AccountStorage.switch_account(selected)
+        AccountStorage.switch_profile(
+            selected
+        )
 
-        print(f"\nActive account changed to: {selected}")
+        session = SessionManager.load()
+
+        if session:
+
+            SessionManager.save(
+                selected,
+                session.get(
+                    "email",
+                    "",
+                ),
+            )
+
+        print(
+            f"\nActive profile: {selected}"
+        )
 
     @staticmethod
     def remove_account():
         """
-        Remove a saved account.
+        Deletes a profile.
         """
 
-        accounts = AccountStorage.get_accounts()
+        profiles = AccountStorage.list_profiles()
 
-        if not accounts:
+        if not profiles:
 
-            print("\nNo saved accounts.")
+            print("\nNo profiles found.")
 
             return
 
@@ -100,25 +132,62 @@ class AccountManager:
 
             try:
 
-                choice = int(input("\nSelect account to remove: "))
+                choice = int(
+                    input(
+                        "\nSelect profile to remove: "
+                    )
+                )
 
-                if 1 <= choice <= len(accounts):
+                if 1 <= choice <= len(profiles):
 
                     break
 
-                print("Invalid selection.")
+                print("\nInvalid selection.")
 
             except ValueError:
 
-                print("Please enter a valid number.")
+                print(
+                    "\nPlease enter a valid number."
+                )
 
-        selected = accounts[choice - 1]
+        selected = profiles[
+            choice - 1
+        ]
 
-        AccountStorage.remove_account(selected)
+        confirm = input(
+            f'\nDelete profile "{selected}"? (y/n): '
+        ).strip().lower()
 
-        print(f"\nRemoved account: {selected}")
+        if confirm != "y":
+
+            print("\nCancelled.")
+
+            return
+
+        # -------------------------------
+        # Was this the active profile?
+        # -------------------------------
+
+        active_profile = SessionManager.get_profile()
+
+        AccountStorage.delete_profile(
+            selected
+        )
+
+        if active_profile == selected:
+
+            SessionManager.clear()
+
+            GmailAuthenticator.logout()
+
+        print(
+            f'\nProfile "{selected}" deleted.'
+        )
 
     @staticmethod
     def active_account():
+        """
+        Returns the active profile.
+        """
 
-        return AccountStorage.get_active_account()
+        return AccountStorage.get_active_profile()

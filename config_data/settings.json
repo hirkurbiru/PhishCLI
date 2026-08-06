@@ -1,6 +1,6 @@
 {
-    "report_directory": "report_output",
-    "max_recent_emails": 5,
+    "report_directory": "reports_output",
+    "max_recent_emails": 10,
     "virustotal_enabled": true,
     "theme": "default"
 }
