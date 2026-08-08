@@ -161,3 +161,4 @@ class SessionManager:
         """
 
         return SessionManager.load()
+
