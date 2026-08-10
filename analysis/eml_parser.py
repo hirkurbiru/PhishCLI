@@ -62,3 +62,4 @@ class EMLParser:
                 f"Invalid or unreadable .eml file: {eml_path.name}",
                 details=str(e),
             ) from e
+
