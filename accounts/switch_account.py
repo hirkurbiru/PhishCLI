@@ -23,3 +23,4 @@ def switch_account():
     print("\nProfile switched successfully.")
 
     pause()
+
