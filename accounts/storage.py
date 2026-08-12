@@ -232,3 +232,4 @@ class AccountStorage:
                 data["active_profile"] = None
 
         AccountStorage.save_accounts(data)
+
