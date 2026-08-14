@@ -41,3 +41,4 @@ CLASS_SAFE = "Safe"
 CLASS_SUSPICIOUS = "Suspicious"
 CLASS_HIGH_RISK = "High Risk"
 CLASS_PHISHING = "Phishing"
+
