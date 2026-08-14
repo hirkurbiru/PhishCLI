@@ -576,3 +576,6 @@ class ScanRepository:
             )
             .all()
         )
+
+
+
