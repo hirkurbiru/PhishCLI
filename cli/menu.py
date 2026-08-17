@@ -26,6 +26,7 @@ def show_main_menu():
     print("7. Reports")
     print("8. Search")
     print("9. Settings")
+    
     print("10. Disconnect Gmail")
     print("11. Exit")
 
